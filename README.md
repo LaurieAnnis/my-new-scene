@@ -1,46 +1,50 @@
-# Unreality3D Creator Template
+# spacedolphin's Unreality3D Experience
 
-Creator community platform with free template Unity project and platform-hosted tools.
+**Unity 6 WebGL Experience by spacedolphin**
 
-## 🚀 Quick Start - Live in Under 20 Minutes
-
-1. **Grab this template** and open in Unity 6.0+
-2. **Create your interactive experience** in the beautifully pre-configured scene
-3. **Publish with one click** - get your professional URL instantly
-
-Your **interactive multiplayer 3D web experience** goes live at: `https://yourname.unreality3d.com/productname/`
-
-## ⚙️ Requirements
-
-### Unity Installation
-- **Unity 6.0+** (Unity 6.1+ recommended)
-- **WebGL Build Support module** - Required for web publishing
-  - Install via: Unity Hub → Installs → Your Unity Version → Add Modules → WebGL Build Support
-
-### For Publishing
-- **Git** and **GitHub account** - Automated deployment included
-- **New to GitHub? No problem!** - Just create a free account, we walk you through the rest during setup
-- **PayPal email** (optional) - To enable platform-hosted transaction tools
-
-## 🎯 What's Included - Everything You Need
-
-### Complete Pre-Configuration
-- ✅ **Unity 6+ WebGL optimization** - Instant web deployment
-- ✅ **Professional character controls** - AAA game style movement and interaction
-- ✅ **PayPal monetization** - 95% creator share, industry-leading creator-first split
-- ✅ **Zero effort Firebase backend** - Authentication and data management
-- ✅ **GitHub Pages** - Creator-controlled, professional showcase publishing 
-- ✅ **Creator Dashboard** - Built in, with instant interactivity tools
-
-### Need Help?
-- **Quick Start Guide:** [unreality3d.com/quickstart.html](https://unreality3d.com/quickstart.html)
-- **Documentation:** [unreality3d.com/docs](https://unreality3d.com/docs)
-- **Support:** admin@unreality3d.com
-
-## 📝 License
-
-This free template is provided for creating content to be shared via the Unreality3D platform. By using this template, you agree to the [Unreality3D Creator Terms](https://unreality3d.com/legal/terms.html).
+🎮 **[Play Experience](https://spacedolphin.unreality3d.com/my-new-scene/)**
 
 ---
 
-**Creator community platform with free template Unity project and platform-hosted tools.** 🌟
+## About This Project
+
+This is an interactive Unity 6 WebGL experience created using the [Unreality3D Platform](https://unreality3d.com).
+
+- **Creator**: spacedolphin
+- **Built with**: Unity 6+ WebGL
+- **Platform**: [Unreality3D](https://unreality3d.com)
+
+
+### Deployment Status
+- ✅ **Auto-deployed**: Push to main branch triggers deployment
+- ✅ **Professional URL**: Custom subdomain routing 
+- ✅ **PayPal Ready**: Monetization system active
+- ✅ **Performance Optimized**: Preconfigured for WebGL
+
+---
+
+### Updating Content
+1. **Unity**: Modify project and republish from Creator Dashboard > Publish tab
+2. **Live**: Changes appear at professional URL automatically
+
+---
+
+## Platform Information
+
+This experience was created using **[Unreality3D](https://unreality3d.com)** - The world's most creator-friendly 3D content platform.
+
+### 🎯 Want to Create Your Own?
+- **Download template Unity project**: [Get U3D Template](https://unreality3d.com/download-template)
+- **Documentation**: [Platform Docs](https://unreality3d.com/docs)
+- **Creator Dashboard**: [Unity Menu > U3D](https://unreality3d.com/quickstart.html)
+
+### 🔧 Platform Features
+- **Zero Setup**: Download template project, build, deploy
+- **Professional URLs**: Custom Unreality3D subdomains for every creator
+- **PayPal Transactions**: Platform-hosted PayPal transactions  
+- **Automatic Deployment**: Firebase Functions + Git operations to GitHub Pages
+- **Performance**: Optimized for fast loading and smooth gameplay
+
+---
+
+**Powered by [Unreality3D](https://unreality3d.com) | Created by spacedolphin**

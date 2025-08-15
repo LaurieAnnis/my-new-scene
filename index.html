@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity Web Player | spacedolphin's Unreality3D Experience</title>
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, shrink-to-fit=no">
+
+    <!-- Google Analytics 4 (GA4) Tracking -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-N4BFSLTHZF"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        
+        gtag('config', 'G-N4BFSLTHZF', {
+            enhanced_measurements: true,
+            file_downloads: true
+        });
+    </script>
+
+    <style>
+        html, body {
+            padding: 0;
+            margin: 0;
+            background: #232323;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        #unity-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: #232323;
+        }
+
+        #unity-canvas {
+            background: #232323;
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: default;
+        }
+
+        #unity-loading-bar {
+            position: absolute;
+            inset-block-start: 50%;
+            inset-inline-start: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            inline-size: min(300px, 90vw);
+            block-size: 150px;
+            z-index: 1000;
+            container-type: inline-size;
+        }
+
+        #unity-logo {
+            inline-size: 154px;
+            block-size: 130px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 154 130"><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="white" font-size="20">Unreality3D</text></svg>') no-repeat center;
+            background-size: contain;
+        }
+
+        #unity-progress-bar-empty {
+            inline-size: 141px;
+            block-size: 18px;
+            margin-block: 10px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 141 18"><rect width="141" height="18" fill="none" stroke="%23ffffff" stroke-width="2"/></svg>') no-repeat center;
+            background-size: contain;
+            position: relative;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        #unity-progress-bar-full {
+            inline-size: 0%;
+            block-size: 100%;
+            background: light-dark(#ffffff, #60a5fa);
+            position: absolute;
+            inset: 0 auto 0 0;
+            border-radius: inherit;
+            transition: inline-size 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @container (max-width: 200px) {
+            #unity-logo {
+                inline-size: 100px;
+                block-size: 85px;
+            }
+            #unity-progress-bar-empty {
+                inline-size: 120px;
+            }
+        }
+
+        @media (orientation: landscape) {
+            #unity-canvas { width: 100vw; height: 100vh; }
+        }
+
+        @media (orientation: portrait) {
+            #unity-canvas { width: 100vw; height: 100vh; }
+        }
+
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+
+<body>
+    <div id="unity-container">
+        <canvas id="unity-canvas" tabindex="-1"></canvas>
+        <div id="unity-loading-bar">
+            <div id="unity-logo"></div>
+            <div id="unity-progress-bar-empty">
+                <div id="unity-progress-bar-full"></div>
+            </div>
+        </div>
+        <div id="unity-warning"></div>
+    </div>
+
+    <script>
+        // Environment Detection
+        function detectEnvironment() {
+            const hostname = window.location.hostname.toLowerCase();
+            const pathname = window.location.pathname;
+
+            if (hostname.endsWith('.unreality3d.com') && hostname !== 'unreality3d.com') {
+                const creatorUsername = hostname.replace('.unreality3d.com', '');
+                const projectName = pathname.split('/').filter(p => p.length > 0)[0] || 'main';
+                
+                console.log('Professional URL detected:', hostname);
+                
+                gtag('event', 'creator_project_visit', {
+                    creator_name: creatorUsername,
+                    project_name: projectName,
+                    content_type: 'unity_webgl',
+                    platform_section: 'creator_content'
+                });
+                
+                return {
+                    type: 'professional',
+                    isProduction: true,
+                    projectId: 'unreality3d',
+                    creatorUsername: creatorUsername,
+                    projectName: projectName
+                };
+            }
+
+            if (hostname.includes('unreality3d.web.app') || hostname.includes('unreality3d.firebaseapp.com')) {
+                gtag('event', 'platform_visit', {
+                    content_type: 'platform_hosting',
+                    platform_section: 'firebase_hosting'
+                });
+                return { type: 'firebase', isProduction: true, projectId: 'unreality3d' };
+            }
+
+            if (hostname.includes('unreality3d2025.web.app') || hostname.includes('unreality3d2025.firebaseapp.com')) {
+                gtag('event', 'platform_visit', {
+                    content_type: 'platform_hosting',
+                    platform_section: 'firebase_development'
+                });
+                return { type: 'firebase', isProduction: false, projectId: 'unreality3d2025' };
+            }
+
+            if (hostname.includes('github.io')) {
+                gtag('event', 'platform_visit', {
+                    content_type: 'github_pages',
+                    platform_section: 'direct_github'
+                });
+                return { type: 'github-pages', isProduction: true, projectId: 'unreality3d' };
+            }
+
+            gtag('event', 'platform_visit', {
+                content_type: 'unknown_hosting',
+                platform_section: 'fallback'
+            });
+            return { type: 'creator', isProduction: true, projectId: 'unreality3d' };
+        }
+
+        const environment = detectEnvironment();
+        environment.creatorPayPalEmail = 'laurie@unreality3d.com';
+        let unityInstance = null;
+
+        // PayPal integration placeholder - will be overridden by injected bridge
+        console.log('💳 PayPal integration will be loaded from platform domain');
+        
+        // Check for PayPal bridge availability
+        function checkPayPalBridgeReady() {
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 60; // Increased to 30 seconds
+                
+                const checkInterval = setInterval(() => {
+                    attempts++;
+                    
+                    // Check multiple indicators that PayPal bridge is ready
+                    if (window.paypalPlatformBridgeReady || 
+                        window.paypalSDKReady || 
+                        (typeof window.StartDirectPayPalDualTransaction === 'function' && 
+                         window.StartDirectPayPalDualTransaction !== arguments.callee)) {
+                        clearInterval(checkInterval);
+                        console.log('✅ PayPal bridge ready');
+                        resolve(true);
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        console.warn('⚠️ PayPal bridge not loaded after 30 seconds');
+                        resolve(false);
+                    } else if (attempts % 10 === 0) {
+                        console.log(`⏳ Waiting for PayPal bridge... (${ attempts * 0.5 }s)`);
+                    }
+                }, 500);
+            });
+        }
+
+        // Send results back to Unity
+        function sendUnityPaymentResult(success, transactionDetails = null) {
+            if (!unityInstance) {
+                console.warn('⚠️ Unity instance not available');
+                return;
+            }
+
+            const gameObjectName = window.currentPayPalGameObject;
+            
+            if (!gameObjectName) {
+                console.error('❌ No GameObject name stored');
+                return;
+            }
+
+            try {
+                unityInstance.SendMessage(gameObjectName, 'OnPaymentComplete', success);
+                
+                if (success === 'true' && transactionDetails) {
+                    unityInstance.SendMessage(gameObjectName, 'OnTransactionDetails', JSON.stringify(transactionDetails));
+                }
+                
+                console.log('✅ Payment result sent to Unity');
+                
+            } catch (error) {
+                console.error('❌ Failed to send message to Unity:', error);
+            }
+        }
+
+        // Placeholder functions - will be overridden by PayPal bridge
+        window.StartDirectPayPalDualTransaction = function(paymentData) {
+            console.log('💳 PayPal transaction requested - checking bridge availability...');
+            
+            checkPayPalBridgeReady().then((ready) => {
+                if (ready) {
+                    // Try to call the actual function if it was overridden
+                    if (typeof window.StartDirectPayPalDualTransaction === 'function' && 
+                        window.StartDirectPayPalDualTransaction !== arguments.callee) {
+                        console.log('✅ PayPal bridge loaded, calling actual function');
+                        window.StartDirectPayPalDualTransaction(paymentData);
+                    } else if (window.paypalSDKReady && typeof paypal !== 'undefined') {
+                        console.log('✅ PayPal SDK available directly');
+                        // Use direct PayPal if available
+                        if (typeof window.initializePayPalCheckout === 'function') {
+                            window.currentPaymentData = paymentData;
+                            window.initializePayPalCheckout();
+                        } else {
+                            console.error('❌ PayPal functions not available');
+                            sendUnityPaymentResult('false');
+                        }
+                    } else {
+                        console.error('❌ PayPal bridge ready but functions not available');
+                        sendUnityPaymentResult('false');
+                    }
+                } else {
+                    console.error('❌ PayPal bridge not available after waiting');
+                    console.error('❌ Check that Load Balancer is injecting PayPal script');
+                    sendUnityPaymentResult('false');
+                }
+            }).catch((error) => {
+                console.error('❌ Error checking PayPal bridge:', error);
+                sendUnityPaymentResult('false');
+            });
+        };
+
+        window.TestDirectPayPalConnection = function(gameObjectName) {
+            console.log('🧪 PayPal connection test requested - checking bridge...');
+            
+            checkPayPalBridgeReady().then((ready) => {
+                if (ready) {
+                    if (typeof window.TestDirectPayPalConnection === 'function' && 
+                        window.TestDirectPayPalConnection !== arguments.callee) {
+                        console.log('✅ Calling actual PayPal test function');
+                        window.TestDirectPayPalConnection(gameObjectName);
+                    } else {
+                        console.log('✅ PayPal bridge ready, sending success');
+                        if (unityInstance) {
+                            unityInstance.SendMessage(gameObjectName, 'OnConnectionTestComplete', 'true');
+                        }
+                    }
+                } else {
+                    console.error('❌ PayPal bridge not available for testing');
+                    if (unityInstance) {
+                        unityInstance.SendMessage(gameObjectName, 'OnConnectionTestComplete', 'false');
+                    }
+                }
+            }).catch((error) => {
+                console.error('❌ Error in PayPal connection test:', error);
+                if (unityInstance) {
+                    unityInstance.SendMessage(gameObjectName, 'OnConnectionTestComplete', 'false');
+                }
+            });
+        };
+
+        // Unity WebGL Loading
+        function loadUnity() {
+            gtag('event', 'unity_load_start', {
+                creator_name: environment.creatorUsername || 'platform',
+                project_name: environment.projectName || 'main',
+                content_type: 'unity_webgl'
+            });
+
+            var container = document.querySelector("#unity-container");
+            var canvas = document.querySelector("#unity-canvas");
+            var loadingBar = document.querySelector("#unity-loading-bar");
+            var progressBarFull = document.querySelector("#unity-progress-bar-full");
+            var warningBanner = document.querySelector("#unity-warning");
+
+            function unityShowBanner(msg, type) {
+                console.log('Unity Banner:', msg, type);
+                
+                if (type === 'error') {
+                    gtag('event', 'unity_load_error', {
+                        error_message: msg,
+                        creator_name: environment.creatorUsername || 'platform',
+                        project_name: environment.projectName || 'main'
+                    });
+                }
+                
+                function updateBannerVisibility() {
+                    warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+                }
+                var div = document.createElement('div');
+                div.innerHTML = msg;
+                warningBanner.appendChild(div);
+                if (type == 'error') div.style = 'background: red; padding: 5px;';
+                else {
+                    if (type == 'warning') div.style = 'background: yellow; color: black; padding: 5px;';
+                    setTimeout(function() {
+                        warningBanner.removeChild(div);
+                        updateBannerVisibility();
+                    }, 5000);
+                }
+                updateBannerVisibility();
+            }
+
+            var buildUrl = "Build";
+            var loaderUrl = buildUrl + "/132ea218d83d1427a2780cfb37b69204.loader.js?v=1755235488586";
+            var config = {
+                dataUrl: buildUrl + "/24894622205d0ee0c1c5284c35499053.data?v=1755235488586",
+                frameworkUrl: buildUrl + "/70803c84a16d3d1cfd3e9724bab9df89.framework.js?v=1755235488586",
+                codeUrl: buildUrl + "/d77c29cea99dccfc7db028c4523eb5a5.wasm?v=1755235488586",
+                streamingAssetsUrl: "StreamingAssets",
+                companyName: "spacedolphin",
+                productName: "spacedolphin's Unreality3D Experience",
+                productVersion: "1.0.0",
+                showBanner: unityShowBanner,
+                cacheControl: function (url) {
+                    if (!url || typeof url !== 'string') {
+                        console.warn('Unity cacheControl called with invalid URL:', url);
+                        return "no-store";
+                    }
+                    if (url.match(/\.data/) || url.match(/\.wasm/) || url.match(/\.framework\.js/)) {
+                        return "must-revalidate";
+                    }
+                    return "no-store";
+                }
+            };
+
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                container.className = "unity-mobile";
+                config.devicePixelRatio = 1;
+                unityShowBanner('WebGL builds are not supported on mobile devices.');
+                
+                gtag('event', 'mobile_access_attempt', {
+                    device_type: 'mobile',
+                    creator_name: environment.creatorUsername || 'platform',
+                    project_name: environment.projectName || 'main'
+                });
+            } else {
+                canvas.style.width = "100vw";
+                canvas.style.height = "100vh";
+            }
+
+            loadingBar.style.display = "none";
+
+            var script = document.createElement("script");
+            script.src = loaderUrl;
+            script.onload = () => {
+                createUnityInstance(canvas, config, (progress) => {
+                    progressBarFull.style.width = 100 * progress + "%";
+                    
+                    if (progress === 0.5) {
+                        gtag('event', 'unity_load_50_percent', {
+                            creator_name: environment.creatorUsername || 'platform',
+                            project_name: environment.projectName || 'main'
+                        });
+                    }
+                }).then((instance) => {
+                    unityInstance = instance;
+                    loadingBar.style.display = "none";
+                    console.log('🎮 Unity loaded - PayPal bridge integration ready');
+                    
+                    gtag('event', 'unity_load_complete', {
+                        creator_name: environment.creatorUsername || 'platform',
+                        project_name: environment.projectName || 'main',
+                        load_time_ms: Date.now() - performance.timing.navigationStart
+                    });
+                    
+                }).catch((message) => {
+                    gtag('event', 'unity_load_failed', {
+                        error_message: message,
+                        creator_name: environment.creatorUsername || 'platform',
+                        project_name: environment.projectName || 'main'
+                    });
+                    alert(message);
+                });
+            };
+            
+            script.onerror = () => {
+                gtag('event', 'unity_script_load_failed', {
+                    script_url: loaderUrl,
+                    creator_name: environment.creatorUsername || 'platform',
+                    project_name: environment.projectName || 'main'
+                });
+            };
+            
+            document.body.appendChild(script);
+        }
+
+        // Responsive canvas handling
+        function handleResize() {
+            if (unityInstance) {
+                const canvas = document.querySelector("#unity-canvas");
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                
+                gtag('event', 'unity_canvas_resize', {
+                    new_width: window.innerWidth,
+                    new_height: window.innerHeight,
+                    creator_name: environment.creatorUsername || 'platform',
+                    project_name: environment.projectName || 'main'
+                });
+            }
+        }
+
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', handleResize);
+
+        // Prevent default touch behaviors on canvas
+        document.addEventListener('touchstart', function(e) {
+            if (e.target.tagName === 'CANVAS') {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', function(e) {
+            if (e.target.tagName === 'CANVAS') {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.tagName === 'CANVAS') {
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        // Debug helper
+        window.debugPayPalGameObject = function() {
+            const gameObjectName = window.currentPayPalGameObject;
+            console.log('🔍 Debug: Current PayPal GameObject name:', gameObjectName || 'NOT SET');
+            
+            if (!gameObjectName) {
+                console.warn('⚠️ No GameObject name stored!');
+                console.warn('⚠️ Make sure Unity calls UnityStartDirectPayPalTransaction');
+            } else {
+                console.log('✅ GameObject name is properly stored for SendMessage calls');
+            }
+            
+            return gameObjectName;
+        };
+
+        // Page engagement tracking
+        let pageStartTime = Date.now();
+        let engagementTracked = false;
+        
+        setTimeout(() => {
+            if (!engagementTracked) {
+                gtag('event', 'page_engagement_30s', {
+                    creator_name: environment.creatorUsername || 'platform',
+                    project_name: environment.projectName || 'main',
+                    engagement_time_msec: 30000
+                });
+                engagementTracked = true;
+            }
+        }, 30000);
+        
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                gtag('event', 'page_hidden', {
+                    time_on_page: Date.now() - pageStartTime,
+                    creator_name: environment.creatorUsername || 'platform',
+                    project_name: environment.projectName || 'main'
+                });
+            } else {
+                gtag('event', 'page_visible', {
+                    creator_name: environment.creatorUsername || 'platform',
+                    project_name: environment.projectName || 'main'
+                });
+                pageStartTime = Date.now();
+            }
+        });
+
+        window.addEventListener('beforeunload', function() {
+            gtag('event', 'page_exit', {
+                total_time_on_page: Date.now() - pageStartTime,
+                creator_name: environment.creatorUsername || 'platform',
+                project_name: environment.projectName || 'main'
+            });
+        });
+
+        // Load Unity immediately
+        loadUnity();
+
+        console.log('🎮 Unity WebGL Template loaded');
+        console.log('🎯 Revenue split: 95% Creator, 5% Platform');
+        console.log('💳 PayPal processing: Platform domain injection');
+        console.log('🌐 Professional URL support enabled');
+        console.log('📊 GA4 Analytics tracking enabled');
+        
+        gtag('event', 'template_initialized', {
+            template_version: 'platform_domain_paypal_v2025',
+            creator_name: environment.creatorUsername || 'platform',
+            project_name: environment.projectName || 'main',
+            features: ['platform_domain_paypal', 'dual_transactions', 'pwa', 'ga4_tracking', 'load_balancer_injection']
+        });
+    </script>
+</body>
+</html>
